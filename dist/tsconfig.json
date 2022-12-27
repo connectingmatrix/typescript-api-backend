@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "target": "es2018",
+    "module": "es2020",
+    "lib": ["es2020", "dom"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,    
+    "declaration": false,
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "noLib": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "baseUrl": "./src/",
+    "rootDir": ".",
+    "typeRoots": [ "node_modules/@types", "./typings.d.ts" ],
+    "paths": {
+      "@webaverse/*": [
+        "./*"
+      ]
+
+    }
+  },
+  "exclude": [
+    "node_modules",
+  ],
+  "compileOnSave": false,
+}

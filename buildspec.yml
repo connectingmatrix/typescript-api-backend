@@ -1,0 +1,67 @@
+version: 0.2
+run-as: root
+
+phases:
+
+  install:
+    commands:
+      - echo Setting up required prerequisites
+      - pip install --upgrade awscli
+      - curl --silent --location -o /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+      - chmod +x /usr/local/bin/kubectl
+      - curl --silent --location -o /usr/local/bin/aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaws.com/1.14.6/2019-08-22/bin/linux/amd64/aws-iam-authenticator"
+      - chmod +x /usr/local/bin/aws-iam-authenticator
+      - curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.74.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+      - mv -v /tmp/eksctl /usr/local/bin
+      - chmod +x /usr/local/bin/eksctl
+      - AWS_ACCOUNT_ID=TBFILLED
+      - IMAGE_TAG=latest
+      - CLUSTER_NAME=api-backend
+
+  pre_build:
+    commands:
+      - echo Logging in to Amazon EKS...
+      - ls -l
+      - chmod a+x ./eks/cluster-setup.sh
+      - sh ./eks/cluster-setup.sh
+      - aws eks --region us-east-1 update-kubeconfig --name $CLUSTER_NAME
+      - echo check config 
+      - kubectl config view --minify
+      - echo check kubectl access
+      - kubectl get svc
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --region us-east-1 --no-include-email)
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$CLUSTER_NAME
+      
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...          
+      - docker build --cache-from $REPOSITORY_URI:$IMAGE_TAG -t $CLUSTER_NAME:$IMAGE_TAG .
+      - docker tag $CLUSTER_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$CLUSTER_NAME:$IMAGE_TAG 
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - kubectl apply -f eksFullAccess.yml
+      - kubectl describe clusterrole.rbac.authorization.k8s.io/eks-console-dashboard-full-access-clusterrole
+      - kubectl describe clusterrolebinding.rbac.authorization.k8s.io/eks-console-dashboard-full-access-binding
+      - kubectl apply -f aws-auth-cm.yaml
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/$CLUSTER_NAME:$IMAGE_TAG
+      - echo Push the latest image to cluster
+      - kubectl apply -f ./eks/deployment.yaml
+      - kubectl rollout restart -f ./eks/deployment.yaml
+      - kubectl apply -f ./eks/service.yaml
+      - kubectl get svc $CLUSTER_NAME
+      - export loadbalancer=$(kubectl get svc $CLUSTER_NAME -o jsonpath='{.status.loadBalancer.ingress[*].hostname}')
+      - kubectl get pods -o wide
+      - while [[ $(kubectl get pods -l app=$CLUSTER_NAME-app -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') == *"False"* ]]; do echo "waiting for pod" && sleep 1 && kubectl get pods -o wide; done
+      - kubectl get pods -o wide
+      - kubectl get endpoints
+      - kubectl get deployments
+      - kubectl logs -l app=$CLUSTER_NAME-app
+      - echo http://${loadbalancer}
+      - curl -k http://${loadbalancer}
+
+
