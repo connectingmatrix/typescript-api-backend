@@ -9,7 +9,7 @@ const {
 
 module.exports = {
     entry: {
-        "webaverse-backend": './src/index',
+        "api-backend": './src/index',
     },
     mode: NODE_ENV,
     target: 'node',

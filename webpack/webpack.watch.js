@@ -9,7 +9,7 @@ module.exports = merge.merge(main, {
     plugins: [
         new WebpackShellPluginNext({
             onBuildEnd: {
-                scripts: ['nodemon --watch dist/webaverse-backend.js --exec \"node dist/webaverse-backend.js\"'],
+                scripts: ['nodemon --watch dist/webaverse-backend.js --exec \"node dist/api-backend.js\"'],
                 blocking: false,
                 parallel: true,
                 safe: false,
