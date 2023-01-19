@@ -6,7 +6,7 @@
   "scripts": {
     "watch": "webpack --config ./webpack/webpack.watch.js",
     "build": "webpack --config ./webpack/webpack.build.js",
-    "package": "npm run build && pkg -t node16-linux,node16-macos-x64 ./dist/village.js -c package.json -o ./bin/village --options max-old-space-size=9000",
+    "package": "npm run build && pkg -t node16-linux,node16-macos-x64 ./dist/api-backend.js -c package.json -o ./bin/api --options max-old-space-size=9000",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },

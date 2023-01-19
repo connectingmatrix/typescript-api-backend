@@ -5,7 +5,7 @@ FROM node:16
 RUN npm install pm2 -g
 
 # Copy source code
-COPY ./bin/api-backend-linux /app/village
+COPY ./bin/api-backend-linux /app/backend
 COPY ./.env /app/.env
 
 # Change working directory
